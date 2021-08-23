@@ -1,0 +1,24 @@
+# Step 1
+## base image for Step 1: node 16-alpine
+FROM node:16-alpine AS builder
+WORKDIR /app
+## 필요한 파일들을 WORKDIR(/app)로 복사한다.
+COPY package.json .
+COPY tsconfig.json .
+COPY src ./src
+COPY env ./env
+RUN npm install --quiet
+## express 프로젝트를 build한다. ts->js (./dist)
+RUN npm run build
+
+
+# Step 2
+## base image for Step 1: node 16
+FROM node:16
+WORKDIR /app
+## Step 1의 builder에서 build된 프로젝트를 가져온다.
+COPY --from=builder /app ./
+ENV NODE_ENV=dev
+EXPOSE 3000
+# application 실행
+CMD ["node", "./dist/app.js"]
